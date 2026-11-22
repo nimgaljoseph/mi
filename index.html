@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>Mini</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+:root{--bg:#0b0d1a;--g:rgba(255,255,255,.07);--b:rgba(255,255,255,.14);--t:#eef0ff;--m:#9aa0c8;--a:#8b7bff;--a2:#4cc9f0;--ok:#4ade80;--no:#f87171}
+*{box-sizing:border-box}html,body{margin:0}
+body{background:radial-gradient(900px 500px at 10% -10%,#2a1f6e66,transparent),radial-gradient(800px 500px at 100% 0,#0e4a6a66,transparent),var(--bg);color:var(--t);font:15px/1.5 system-ui,"Segoe UI",sans-serif;min-height:100vh}
+.app{display:grid;grid-template-columns:1fr 380px;gap:14px;padding:14px;max-width:1250px;margin:auto}
+.card{background:var(--g);border:1px solid var(--b);border-radius:18px;backdrop-filter:blur(14px);padding:14px}
+.top{display:flex;align-items:center;gap:14px;margin-bottom:10px}
+.orb{width:54px;height:54px;border-radius:50%;background:conic-gradient(var(--a),var(--a2),var(--a));flex:none;box-shadow:0 0 24px #8b7bff66;animation:sp 8s linear infinite}
+.orb.l{box-shadow:0 0 40px #4ade80aa;animation:pu 1s ease-in-out infinite}.orb.s{box-shadow:0 0 44px #4cc9f0cc;animation:pu .6s ease-in-out infinite}
+@keyframes sp{to{transform:rotate(360deg)}}@keyframes pu{50%{transform:scale(1.14)}}
+h1{font-size:20px;margin:0}.sub{color:var(--m);font-size:12.5px}
+.chat{display:flex;flex-direction:column;height:calc(100vh - 28px);min-height:500px}
+.msgs{flex:1;overflow:auto;display:flex;flex-direction:column;gap:10px;padding:4px 2px 10px}
+.m{max-width:85%;padding:9px 13px;border-radius:16px;background:var(--g);border:1px solid var(--b);white-space:pre-wrap;word-wrap:break-word}
+.m.u{align-self:flex-end;background:linear-gradient(135deg,#6d5dfc88,#4cc9f055)}.m small{display:block;color:var(--m);margin-top:4px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+input[type=text],textarea,select{background:var(--g);border:1px solid var(--b);color:var(--t);border-radius:12px;padding:9px 12px;font:inherit;min-width:0}
+input[type=text]{flex:1}textarea{width:100%;min-height:70px}select option{color:#000}
+.btn{background:var(--g);border:1px solid var(--b);color:var(--t);border-radius:10px;padding:7px 12px;cursor:pointer;font:inherit}
+.btn.p{background:linear-gradient(135deg,#6d5dfc,#3aa8d8);border:0}.btn:hover{filter:brightness(1.2)}.btn.on{background:linear-gradient(135deg,#16a34a,#4ade80);color:#052e16;border:0}
+.tabs{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap}.tabs .btn{padding:5px 10px;font-size:13px}.tabs .btn.sel{background:var(--a)}
+.pane{display:none;max-height:calc(100vh - 100px);overflow:auto}.pane.on{display:block}
+.it{padding:8px 0;border-bottom:1px solid var(--b);font-size:13.5px}.pill{font-size:11px;padding:1px 8px;border-radius:99px;border:1px solid var(--b);color:var(--m)}
+.ok{color:var(--ok)}.no{color:var(--no)}label.s{display:flex;gap:8px;align-items:center;font-size:13.5px;color:var(--m)}
+.vid{position:relative;background:#000;border-radius:12px;overflow:hidden;margin-bottom:8px}.vid video{width:100%;display:block}.vid canvas{position:absolute;inset:0;width:100%;height:100%}
+.drop{border:2px dashed var(--b);border-radius:14px;padding:18px;text-align:center;color:var(--m);cursor:pointer}.drop.h{border-color:var(--a)}
+.toast{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);background:#1b1f3a;border:1px solid var(--b);padding:9px 14px;border-radius:12px;display:none;max-width:90vw;z-index:9}
+@media(max-width:900px){.app{grid-template-columns:1fr}.chat{height:70vh}.pane{max-height:none}}
+</style></head><body>
+<div class="app">
+<div class="card chat">
+ <div class="top"><div class="orb" id="orb"></div><div style="flex:1"><h1>Mini <span class="pill" id="lv"></span></h1><div class="sub" id="st">Starting…</div></div><div class="sub" id="brain"></div></div>
+ <div class="msgs" id="msgs"></div>
+ <div class="row" style="margin-bottom:8px"><button class="btn p" id="talk">🎙 Talk</button><button class="btn" id="stop">⏹ Stop</button><label class="s"><input type="checkbox" id="wake"> Wake word “Hey Mini”</label><label class="s"><input type="checkbox" id="vo" checked> Voice replies</label></div>
+ <div class="row"><input type="text" id="in" placeholder="Type to Mini… (“learn about Docker”, “remember I like mornings”, “what do you see?”)"><button class="btn p" id="send">Send</button></div>
+</div>
+<div class="card">
+ <div class="tabs" id="tabs"><button class="btn sel" data-p="vis">Camera</button><button class="btn" data-p="know">Knowledge</button><button class="btn" data-p="mem">Memory</button><button class="btn" data-p="goals">Goals</button><button class="btn" data-p="perm">Permissions</button><button class="btn" data-p="evo">Evolution</button><button class="btn" data-p="set">Voice</button></div>
+ <div class="pane on" id="vis">
+  <div class="vid" id="vbox" style="display:none"><video id="vd" autoplay playsinline muted></video><canvas id="ov"></canvas></div>
+  <div class="row" style="margin-bottom:8px"><button class="btn p" id="cs">Start camera</button><button class="btn" id="ce">Stop</button><label class="s"><input type="checkbox" id="auto"> Recognize live</label></div>
+  <div class="row" style="margin-bottom:8px"><input type="text" id="en" placeholder="Name (Joe, Bruno…)"><select id="ek"><option value="person">Person</option><option value="pet">Pet</option></select><button class="btn" id="eb">Introduce</button></div>
+  <div class="row" style="margin-bottom:8px"><button class="btn" id="ds">What do you see?</button></div>
+  <p class="sub">Hold still in good light. Mini takes 5 samples. For pets, fill the frame with the animal and vary angles when you introduce them again.</p><div id="known"></div></div>
+ <div class="pane" id="know">
+  <div class="drop" id="drop">Drop files here or click to choose<br><span class="sub">PDF, DOCX, TXT, MD, CSV, JSON, code</span></div><input type="file" id="fi" multiple style="display:none">
+  <textarea id="kt" placeholder="…or paste notes here" style="margin-top:8px"></textarea>
+  <div class="row" style="margin:6px 0"><input type="text" id="kn" placeholder="Title for notes"><button class="btn" id="ka">Save notes</button></div>
+  <div class="row" style="margin-bottom:8px"><input type="text" id="ls" placeholder="Test search my library…"></div><div id="lsr"></div><div id="docs"></div></div>
+ <div class="pane" id="mem"><div class="row" style="margin-bottom:6px"><input type="text" id="ms" placeholder="Search memories…"><button class="btn" id="ex">Export</button></div><div id="mems"></div></div>
+ <div class="pane" id="goals"><div class="row" style="margin-bottom:6px"><input type="text" id="gi" placeholder="Add a goal or reminder…"><button class="btn" id="ga">Add</button></div><div id="gl"></div></div>
+ <div class="pane" id="perm"><div id="perms"></div><div class="sub" style="margin-top:8px" id="audit"></div></div>
+ <div class="pane" id="evo"></div>
+ <div class="pane" id="set"><p class="sub">Female voice (your device’s offline voices)</p><select id="vs" style="width:100%"></select><div class="row" style="margin-top:8px"><button class="btn" id="vt">Test voice</button></div><p class="sub">Speech recognition runs offline with Whisper on your computer. Install it once with <code>pip install -r backend/requirements-voice.txt</code>.</p></div>
+</div></div>
+<div class="toast" id="toast"></div>
+<script>
+const $=i=>document.getElementById(i);
+function el(t,c,x){const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+function toast(t){const e=$("toast");e.textContent=t;e.style.display="block";clearTimeout(toast.h);toast.h=setTimeout(()=>e.style.display="none",3500)}
+function status(t,m){$("st").textContent=t;$("orb").className="orb"+(m?" "+m:"")}
+async function api(p,m,b,form){const o={method:m||"GET"};if(form)o.body=form;else if(b){o.headers={"Content-Type":"application/json"};o.body=JSON.stringify(b)}
+ const r=await fetch("/api"+p,o);let j=null;try{j=await r.json()}catch(e){}
+ if(!r.ok){const d=j&&j.detail;throw {status:r.status,perm:d&&d.permission_required,msg:typeof d=="string"?d:r.statusText}}return j}
+let OWNER="Joe",ST={},seen={},convo=false,speaking=false,busy=false,rec=null,voices=[];
+function add(t,u,src){const d=el("div","m"+(u?" u":""),t);if(src&&src.length)d.appendChild(el("small",0,"From your library: "+src.join(", ")));$("msgs").appendChild(d);$("msgs").scrollTop=1e9;return d}
+function card(text,btns){const d=el("div","m",text+" ");btns.forEach(b=>{const e=el("button","btn",b[0]);e.style.margin="4px 4px 0 0";e.onclick=()=>{d.remove();b[1]()};d.appendChild(e)});$("msgs").appendChild(d);$("msgs").scrollTop=1e9}
+// ---- permissions
+async function perms(){ST=(await api("/permissions"));return ST.states}
+function need(p,why){return new Promise(async res=>{const s=(await perms())[p];if(s=="always"||s=="once")return res(true);if(s=="deny"){toast("That permission is denied. Change it in Permissions.");return res(false)}
+ const dec=async d=>{await api("/permissions/"+p,"POST",{decision:d});rPerms();res(d!="deny")};
+ card(why,[["Allow once",()=>dec("allow_once")],["Always allow",()=>dec("always_allow")],["Deny",()=>dec("deny")]]);speak(why)})}
+async function endSession(p){const s=(await perms())[p];if(s=="once"){await api("/permissions/"+p,"DELETE");rPerms()}}
+async function rPerms(){const s=await perms(),h=$("perms");h.innerHTML="";Object.keys(s).forEach(k=>{const d=el("div","it"),v=s[k];d.appendChild(el("b",0,k+" "));d.appendChild(el("span","pill "+(v=="always"||v=="once"?"ok":v=="deny"?"no":""),v=="ask"?"asks first":v));const r=el("div","row");r.style.marginTop="6px";
+ [["Allow once","allow_once"],["Always","always_allow"],["Deny","deny"]].forEach(b=>{const e=el("button","btn",b[0]);e.onclick=async()=>{await api("/permissions/"+k,"POST",{decision:b[1]});rPerms()};r.appendChild(e)});const e=el("button","btn","Reset");e.onclick=async()=>{await api("/permissions/"+k,"DELETE");rPerms()};r.appendChild(e);d.appendChild(r);h.appendChild(d)});
+ $("audit").textContent=ST.audit.slice(0,6).map(a=>a.ts+" "+a.permission+": "+a.decision).join("\n");$("audit").style.whiteSpace="pre-wrap"}
+// ---- speech out
+function loadVoices(){voices=speechSynthesis.getVoices();const sel=$("vs");sel.innerHTML="";const fem=/zira|aria|jenny|samantha|susan|hazel|karen|moira|tessa|victoria|fiona|female|libby|sonia|natasha/i;let pick=localStorage.getItem("mini_voice");
+ voices.filter(v=>/^en/i.test(v.lang)).forEach(v=>{const o=el("option",0,v.name+" ("+v.lang+")");o.value=v.name;sel.appendChild(o);if(!pick&&fem.test(v.name))pick=v.name});if(pick)sel.value=pick}
+if("speechSynthesis" in window){loadVoices();speechSynthesis.onvoiceschanged=loadVoices}
+$("vs").onchange=()=>localStorage.setItem("mini_voice",$("vs").value);
+function speak(text,done){if(!("speechSynthesis" in window)||!$("vo").checked){done&&done();return}
+ speechSynthesis.cancel();speaking=true;status("Speaking…","s");const parts=(text.replace(/[*_`#>]/g,"").match(/[^.!?\n]+[.!?]*/g)||[text]);let i=0;
+ (function nx(){if(i>=parts.length||!speaking){speaking=false;status(convo?"Listening…":"Ready.",convo?"l":"");done&&done();return}
+  const u=new SpeechSynthesisUtterance(parts[i++].trim()),v=voices.find(v=>v.name==$("vs").value);if(v){u.voice=v;u.lang=v.lang}u.pitch=1.12;u.onend=nx;u.onerror=nx;speechSynthesis.speak(u)})()}
+$("vt").onclick=()=>speak("Hi "+OWNER+", I’m Mini. This is how I sound.");
+// ---- speech in (offline Whisper via backend)
+async function listen(){if(!convo||speaking||busy||rec)return;let stream;
+ try{stream=await navigator.mediaDevices.getUserMedia({audio:true})}catch(e){add("I can’t reach the microphone. Check your browser’s mic permission.");return stopConvo()}
+ const mr=new MediaRecorder(stream),ch=[];rec=mr;mr.ondataavailable=e=>ch.push(e.data);
+ const ac=new AudioContext(),an=ac.createAnalyser();ac.createMediaStreamSource(stream).connect(an);const buf=new Float32Array(an.fftSize);let voiced=false,last=Date.now(),t0=Date.now();
+ const iv=setInterval(()=>{an.getFloatTimeDomainData(buf);let s=0;for(const x of buf)s+=x*x;const rms=Math.sqrt(s/buf.length);const now=Date.now();if(rms>0.02){voiced=true;last=now}
+  if((voiced&&now-last>1300)||(!voiced&&now-t0>12000)||now-t0>30000){clearInterval(iv);if(mr.state!="inactive")mr.stop()}},100);
+ mr.onstop=async()=>{stream.getTracks().forEach(t=>t.stop());ac.close();rec=null;if(!convo)return;if(!voiced)return listen();status("Understanding…","");
+  try{const f=new FormData();f.append("audio",new Blob(ch,{type:"audio/webm"}),"a.webm");const r=await api("/stt","POST",null,f);if(r.text)heard(r.text);else listen()}
+  catch(e){add(e.status==501?"Offline listening isn’t installed yet. Run: pip install -r backend/requirements-voice.txt (then restart me). You can type meanwhile.":"I couldn’t understand audio: "+e.msg);stopConvo()}};
+ mr.start();status("Listening…","l")}
+function heard(t){t=t.trim();if(!t)return listen();if($("wake").checked){const m=t.match(/^(?:hey |hi |ok )?mini\b[ ,.:!]*(.*)$/i);if(!m){status("Waiting for “Hey Mini”…","l");return listen()}t=m[1].trim();if(!t){add("Yes, "+OWNER+"?");return speak("Yes, "+OWNER+"?",listen)}}send(t)}
+async function stopConvo(){convo=false;try{rec&&rec.state!="inactive"&&rec.stop()}catch(e){}rec=null;speaking=false;speechSynthesis.cancel();await endSession("microphone");$("talk").classList.remove("on");$("talk").textContent="🎙 Talk";status("Ready.","")}
+$("talk").onclick=async()=>{if(convo)return stopConvo();if(!await need("microphone","Joe, I want to use your microphone so we can talk. Allow once, always allow, or deny?"))return;convo=true;$("talk").classList.add("on");$("talk").textContent="🎙 Listening (tap to end)";listen()};
+$("stop").onclick=stopConvo;
+// ---- brain
+const seenNow=()=>Object.keys(seen).filter(n=>Date.now()-seen[n]<10000);
+async function send(t){t=(t||$("in").value).trim();if(!t||busy)return;$("in").value="";speechSynthesis.cancel();add(t,1);let m;
+ const say=(r,after)=>{add(r);speak(r,after||listen)};
+ try{
+ if(m=t.match(/^(?:mini[, ]+)?(?:please )?(?:remember|note) (?:that )?(.+)/i)){await api("/memory","POST",{content:m[1].replace(/\.+$/,"")});rMems();return say("Got it, I’ll remember that.")}
+ if(m=t.match(/^(?:mini[, ]+)?(?:please )?(?:my goal is(?: to)?|i plan to|remind me to|add (?:a )?goal(?: to)?)[ :]+(.+)/i)){await api("/tasks","POST",{title:m[1].replace(/\.+$/,""),kind:"goal"});rGoals();return say("Added to your goals.")}
+ if(m=t.match(/^(?:mini[, ]+)?(?:please )?(?:learn|research|study)(?: more)?(?: about)? (.+)/i))return learn(m[1].replace(/[.?!]+$/,""));
+ if(/what (do|can) you see|who (is|am) (this|i)|look at (this|me)/i.test(t)&&cam.on)return look();
+ busy=true;status("Thinking…","");const d=add("…");
+ try{const r=await api("/chat","POST",{message:t,seen:seenNow()});d.textContent=r.reply;if(r.sources.length)d.appendChild(el("small",0,"From your library: "+[...new Set(r.sources)].join(", ")));busy=false;speak(r.reply,listen);evo()}
+ catch(e){busy=false;d.textContent=e.msg;status("Ready.","")}
+ }catch(e){busy=false;add(e.msg||"Something went wrong.")}}
+async function learn(topic){busy=true;try{
+ let r=await api("/learn","POST",{topic});
+ if(r.needs_permission){busy=false;return card(r.prompt+" (I will go online only for this, then disconnect and keep the result offline.)",[["Allow once",async()=>{await api("/permissions/internet","POST",{decision:"allow_once"});rPerms();learn(topic)}],["Deny",()=>add("Understood, I’ll stay offline.")]])}
+ add("I’ve studied "+topic+" and saved it to your library. Internet is closed again.\n\n"+r.summary);speak("I’ve studied "+topic+" and saved it to your library. I’m offline again.",listen);rDocs();rPerms();busy=false
+ }catch(e){busy=false;add(e.msg||"I couldn’t learn that.")}}
+$("send").onclick=()=>send();$("in").onkeydown=e=>{if(e.key=="Enter")send()};
+// ---- camera (offline recognition)
+const cam={on:false,stream:null,iv:null};
+function frame(){const v=$("vd"),c=document.createElement("canvas");c.width=v.videoWidth;c.height=v.videoHeight;c.getContext("2d").drawImage(v,0,0);return c.toDataURL("image/jpeg",.85)}
+$("cs").onclick=async()=>{if(cam.on)return;if(!await need("camera","Joe, I want to use your webcam to understand what you are showing me. Allow once, always allow, or deny?"))return;
+ try{cam.stream=await navigator.mediaDevices.getUserMedia({video:true});$("vd").srcObject=cam.stream;$("vbox").style.display="block";cam.on=true;$("cs").classList.add("on")}catch(e){toast("Browser blocked the camera: "+e.message)}};
+$("ce").onclick=async()=>{clearInterval(cam.iv);cam.iv=null;$("auto").checked=false;if(cam.stream)cam.stream.getTracks().forEach(t=>t.stop());cam.stream=null;cam.on=false;$("vbox").style.display="none";$("cs").classList.remove("on");await endSession("camera")};
+$("eb").onclick=async()=>{const n=$("en").value.trim();if(!cam.on)return toast("Start the camera first");if(!n)return toast("Type a name first");const k=$("ek").value;let ok=0,err="";speak((k=="pet"?"Nice to meet ":"Nice to meet you, ")+n+". Hold still.");
+ for(let i=0;i<5;i++){try{await api("/vision/enroll","POST",{name:n,kind:k,image:frame()});ok++}catch(e){err=e.msg}await new Promise(r=>setTimeout(r,600))}
+ add(ok?`I’ve learned ${n} (${ok} samples). I’ll recognise ${n} next time.`:"I couldn’t learn that: "+err);if(ok)speak("I’ll remember "+n+".");rKnown()};
+$("ds").onclick=()=>look();
+async function look(){if(!cam.on){add("Start the camera first and I’ll take a look.");return}status("Looking…","");try{const r=await api("/vision/describe","POST",{image:frame()});let t=r.text;const s=seenNow();if(s.length)t="I can see "+s.join(" and ")+". "+t;add(t);speak(t,listen)}catch(e){add(e.msg)}}
+$("auto").onchange=()=>{clearInterval(cam.iv);if(!$("auto").checked||!cam.on)return;let busyR=false;const greet={};
+ cam.iv=setInterval(async()=>{if(busyR||!cam.on)return;busyR=true;try{const r=await api("/vision/recognize","POST",{image:frame()});draw(r);r.faces.concat(r.pets).forEach(f=>{if(f.name&&f.name!="unknown"){seen[f.name]=Date.now();if(!greet[f.name]||Date.now()-greet[f.name]>90000){greet[f.name]=Date.now();const t=f.box?`Hello ${f.name}!`:`I see ${f.name}.`;add(t);speak(t)}}})}catch(e){toast(e.msg);clearInterval(cam.iv);$("auto").checked=false}busyR=false},2500)};
+function draw(r){const v=$("vd"),c=$("ov");c.width=v.clientWidth;c.height=v.clientHeight;const x=c.getContext("2d"),k=v.clientWidth/v.videoWidth;x.lineWidth=2;x.font="16px system-ui";
+ r.faces.forEach(f=>{const[a,b,w,h]=f.box.map(z=>z*k);x.strokeStyle=f.name=="unknown"?"#f87171":"#4ade80";x.strokeRect(a,b,w,h);x.fillStyle=x.strokeStyle;x.fillText(f.name+" "+Math.round(f.score*100)+"%",a,Math.max(14,b-6))});
+ r.pets.forEach(p=>{x.fillStyle="#4cc9f0";x.fillText("🐾 "+p.name+" "+Math.round(p.score*100)+"%",8,22)})}
+async function rKnown(){const k=await api("/vision/known"),h=$("known");h.innerHTML="";if(!k.length)h.appendChild(el("p","sub","I don’t know anyone yet. Start the camera, type a name and tap Introduce."));k.forEach(p=>{const d=el("div","it",(p.kind=="pet"?"🐾 ":"🙂 ")+p.name+" · "+p.samples+" samples ");const b=el("button","btn","Forget");b.onclick=async()=>{await api("/vision/known/"+encodeURIComponent(p.name),"DELETE");rKnown()};d.appendChild(b);h.appendChild(d)})}
+// ---- knowledge library
+async function rDocs(){const d=await api("/knowledge"),h=$("docs");h.innerHTML="";if(!d.length)h.appendChild(el("p","sub","Your library is empty. Upload what you want me to know."));d.forEach(x=>{const r=el("div","it",(x.kind=="learned"?"🌐 ":"📄 ")+x.name+" · "+x.chunks+" parts ");const b=el("button","btn","Delete");b.onclick=async()=>{await api("/knowledge/"+x.id,"DELETE");rDocs()};r.appendChild(b);h.appendChild(r)})}
+async function upload(files){if(!files.length)return;const f=new FormData();[...files].forEach(x=>f.append("files",x));toast("Reading and indexing…");try{const r=await api("/knowledge/upload","POST",null,f);const bad=r.filter(x=>x.error);toast(bad.length?bad[0].name+": "+bad[0].error:"Added "+r.length+" file(s). I can use them offline now.");if(r.some(x=>x.semantic===false))toast("Saved. Run 'ollama pull nomic-embed-text' for smarter search.");rDocs()}catch(e){toast(e.msg)}}
+$("drop").onclick=()=>$("fi").click();$("fi").onchange=()=>upload($("fi").files);
+["dragover","dragenter"].forEach(ev=>$("drop").addEventListener(ev,e=>{e.preventDefault();$("drop").classList.add("h")}));["dragleave","drop"].forEach(ev=>$("drop").addEventListener(ev,e=>{e.preventDefault();$("drop").classList.remove("h")}));$("drop").addEventListener("drop",e=>upload(e.dataTransfer.files));
+$("ka").onclick=async()=>{const t=$("kt").value.trim();if(!t)return;try{await api("/knowledge/text","POST",{name:$("kn").value.trim()||"Note "+new Date().toLocaleString(),text:t});$("kt").value="";$("kn").value="";rDocs();toast("Saved")}catch(e){toast(e.msg)}};
+$("ls").oninput=async()=>{const q=$("ls").value.trim(),h=$("lsr");h.innerHTML="";if(q.length<3)return;try{(await api("/knowledge/search?q="+encodeURIComponent(q))).forEach(r=>{const d=el("div","it");d.appendChild(el("b",0,r.doc+" · "+r.score));d.appendChild(el("div","sub",r.text.slice(0,200)+"…"));h.appendChild(d)})}catch(e){}};
+// ---- memory, goals
+async function rMems(){const q=$("ms").value,r=await api("/memory?q="+encodeURIComponent(q)),h=$("mems");h.innerHTML="";if(!r.length)h.appendChild(el("p","sub","No memories yet. Say “remember I’m studying for Azure.”"));
+ r.forEach(m=>{const d=el("div","it"),s=el("span",0,(m.tags=="auto"?"✦ ":"")+m.content),e=el("button","btn","Edit"),x=el("button","btn","Delete");e.style.cssText=x.style.cssText="padding:2px 8px;font-size:12px;margin-left:6px";
+  x.onclick=async()=>{await api("/memory/"+m.id,"DELETE");rMems()};e.onclick=()=>{const i=el("input");i.type="text";i.value=m.content;d.innerHTML="";d.appendChild(i);i.focus();i.onkeydown=async ev=>{if(ev.key=="Enter"){await api("/memory/"+m.id,"PUT",{content:i.value});rMems()}if(ev.key=="Escape")rMems()}};d.append(s,e,x);h.appendChild(d)})}
+$("ms").oninput=rMems;$("ex").onclick=()=>window.open("/api/memory-export");
+async function rGoals(){const g=await api("/tasks"),h=$("gl");h.innerHTML="";if(!g.length)h.appendChild(el("p","sub","No goals yet. Say “my goal is to finish my resume.”"));g.forEach(t=>{const d=el("div","it"),c=document.createElement("input");c.type="checkbox";c.checked=!!t.done;c.onchange=async()=>{await api("/tasks/"+t.id+"/toggle","POST");rGoals()};const s=el("span",0," "+t.title);if(t.done)s.style.textDecoration="line-through";const x=el("button","btn","✕");x.style.cssText="padding:1px 7px;font-size:12px;margin-left:8px";x.onclick=async()=>{await api("/tasks/"+t.id,"DELETE");rGoals()};d.append(c,s,x);h.appendChild(d)})}
+$("ga").onclick=async()=>{const v=$("gi").value.trim();if(!v)return;await api("/tasks","POST",{title:v,kind:"goal"});$("gi").value="";rGoals()};
+// ---- evolution
+async function evo(){const s=await api("/evolve"),p=$("evo");const lvl=Math.floor(Math.sqrt((await api("/status")).memory.reduce((a,x)=>a+x.n,0)*2+s.refl*8+Math.floor(s.turns/2)))+1;$("lv").textContent="Lv "+lvl;p.innerHTML="";
+ const a=el("div","it"),lb=el("label","s"),cb=document.createElement("input");cb.type="checkbox";cb.checked=s.auto===true;cb.onchange=async()=>{await api("/evolve/auto","POST",{value:cb.checked});if(cb.checked)add("I’ll now learn from our chats using only my local brain: useful facts and goals are saved, duplicates tidied. Everything is visible and undoable in Evolution.");evo()};
+ lb.append(cb,document.createTextNode("Evolve automatically (local brain only)"));a.appendChild(lb);const r=el("div","row");r.style.marginTop="6px";const b1=el("button","btn p","Reflect now"),b2=el("button","btn","Undo last reflection");
+ b1.onclick=async()=>{toast("Reflecting…");try{await api("/evolve/reflect","POST");rMems();evo();toast("Reflection complete")}catch(e){toast(e.msg)}};b2.onclick=async()=>{await api("/evolve/undo","POST");rMems();evo()};r.append(b1,b2);a.appendChild(r);p.appendChild(a);
+ if(s.profile){const q=el("div","it");q.appendChild(el("b",0,"What I’ve learned about you"));q.appendChild(el("div","sub",s.profile));q.appendChild(el("div","sub","Detail "+s.style.detail+"/100 · Playfulness "+s.style.play+"/100"));p.appendChild(q)}
+ if(s.sugg.length){const q=el("div","it");q.appendChild(el("b",0,"I’d like to learn next"));s.sugg.forEach(t=>{const w=el("div","row");w.style.marginTop="4px";w.appendChild(el("span","sub",t));const b=el("button","btn","Learn");b.onclick=()=>learn(t);w.appendChild(b);q.appendChild(w)});p.appendChild(q)}
+ if(s.upg.length){const q=el("div","it");q.appendChild(el("b",0,"Upgrades I’d suggest"));s.upg.forEach(t=>q.appendChild(el("div","sub","• "+t)));q.appendChild(el("div","sub","I never edit my own code. Ask your developer or Claude to add these."));p.appendChild(q)}
+ const g=el("div","it");g.appendChild(el("b",0,"Evolution log"));if(!s.log.length)g.appendChild(el("div","sub","Nothing yet."));s.log.slice(0,12).forEach(l=>g.appendChild(el("div","sub",new Date(l.ts*1000).toLocaleDateString()+" · "+l.text)));p.appendChild(g)}
+// ---- tabs and boot
+document.querySelectorAll("#tabs .btn").forEach(b=>b.onclick=()=>{document.querySelectorAll("#tabs .btn").forEach(x=>x.classList.remove("sel"));document.querySelectorAll(".pane").forEach(x=>x.classList.remove("on"));b.classList.add("sel");$(b.dataset.p).classList.add("on")});
+(async()=>{try{const s=await api("/status");OWNER=s.owner;const l=s.llm;$("brain").textContent=l.ollama?"🧠 "+l.brain+" · offline":"";
+ if(!l.ollama){status("My brain (Ollama) isn’t running.","");add("I can’t reach my local brain. Start Ollama, then reload this page.")}
+ else{status("Ready. Tap Talk or type.","");add("Hi "+OWNER+", I’m Mini. I think with a model on this computer, so I work offline. Upload things you want me to know, introduce yourself on camera, or just talk."+(l.brain_ready?"":"\n\nNote: the brain model "+l.brain+" isn’t downloaded yet. Run: ollama pull "+l.brain))
+  if(!l.embed_ready)add("Tip: run “ollama pull nomic-embed-text” so I can search your library by meaning, not just keywords.");if(!s.vision_ready)add("Camera recognition needs a one-time model download: run scripts\\download_models.bat")}
+ const g=await api("/tasks");const open=g.filter(t=>!t.done);if(open.length)add("Open goals: "+open.slice(0,3).map(t=>t.title).join("; ")+".")}catch(e){status("Can’t reach the Mini server.","")}
+ rPerms();rKnown();rDocs();rMems();rGoals();evo().catch(()=>{})})();
+</script></body></html>

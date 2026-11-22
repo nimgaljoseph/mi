@@ -1,0 +1,10 @@
+# personal data: never commit
+data/
+*.db
+# big downloads
+models/
+.venv/
+node_modules/
+__pycache__/
+*.pyc
+.env
